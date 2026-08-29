@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="tr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>js testleri</title>
+    <style>
+      * {
+        font-family: sans-serif;
+      }
+      button[type="ugur-hoca"] {
+        background-color: #f00;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 12px;
+        color: #fff;
+        cursor: pointer;
+      }
+      button[type="ugur-hoca"]:hover {
+        background-color: #c00;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 12px;
+        color: #fff;
+      }
+    </style>
+  </head>
+  <body>
+    <h1 id="anabaslik">Burada bir başlık dursun</h1>
+    <p>bu dosya üstünde çeşitli JS işlemleri yapacağız</p>
+    <p>birincil amacımız event-listener mantığını anlamak olacak</p>
+    <button id="tiklamac">Tıkla</button>
+    <hr />
+
+    <div>
+      <input
+        type="text"
+        id="yeni-sayac-input"
+        placeholder="Sayaç adı giriniz..."
+      />
+      <button id="sayac-ekle-btn">Sayaç Ekle</button>
+    </div>
+    <hr />
+
+    <div id="sayaclar-kapsayici"></div>
+
+    <script>
+      const STORAGE_KEY = "dinamik_sayaclar";
+      const yeniSayacInput = document.getElementById("yeni-sayac-input");
+      const sayacEkleBtn = document.getElementById("sayac-ekle-btn");
+      const sayaclarKapsayici = document.getElementById("sayaclar-kapsayici");
+
+      const varsayilanSayaclar = [
+        { id: "kahve-sayac", ad: "Kahve Sayacı", deger: 0, ozelTip: false },
+        { id: "yemek-sayac", ad: "Yemek Sayacı", deger: 0, ozelTip: false },
+        {
+          id: "hocanin-sigara-sayaci",
+          ad: "<mark>Uğur Hocanın</mark> Sigara Sayacı",
+          deger: 0,
+          ozelTip: true,
+        },
+      ];
+
+      function sayaclariGetir() {
+        const kayitli = localStorage.getItem(STORAGE_KEY);
+        if (!kayitli) {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(varsayilanSayaclar));
+          return varsayilanSayaclar;
+        }
+        try {
+          return JSON.parse(kayitli);
+        } catch {
+          return varsayilanSayaclar;
+        }
+      }
+
+      function sayaclariKaydetVeCiz(sayaclar) {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(sayaclar));
+        ekraniCiz(sayaclar);
+      }
+
+      function ekraniCiz(sayaclar) {
+        sayaclarKapsayici.innerHTML = "";
+
+        sayaclar.forEach((sayac) => {
+          const kart = document.createElement("div");
+          const tipAttr = sayac.ozelTip ? 'type="ugur-hoca"' : "";
+
+          kart.innerHTML = `
+            <h2>${sayac.ad}: <span id="${sayac.id}">${sayac.deger}</span></h2>
+            <div>
+              <button data-id="${sayac.id}" data-action="artir" ${tipAttr}>Artır</button>
+              <button data-id="${sayac.id}" data-action="azalt" ${tipAttr}>Azalt</button>
+              <button data-id="${sayac.id}" data-action="sil">Sil</button>
+            </div>
+            <hr />
+          `;
+          sayaclarKapsayici.appendChild(kart);
+        });
+      }
+
+      function yeniSayacEkle() {
+        const ad = yeniSayacInput.value.trim();
+        if (!ad) return;
+
+        const sayaclar = sayaclariGetir();
+        const yeniId = "sayac_" + Date.now();
+
+        sayaclar.push({
+          id: yeniId,
+          ad: ad,
+          deger: 0,
+          ozelTip: false,
+        });
+
+        sayaclariKaydetVeCiz(sayaclar);
+        yeniSayacInput.value = "";
+      }
+
+      sayaclarKapsayici.addEventListener("click", function (e) {
+        const button = e.target.closest("button");
+        if (!button) return;
+
+        const id = button.dataset.id;
+        const action = button.dataset.action;
+        let sayaclar = sayaclariGetir();
+
+        if (action === "artir") {
+          sayaclar = sayaclar.map((s) =>
+            s.id === id ? { ...s, deger: s.deger + 1 } : s,
+          );
+        } else if (action === "azalt") {
+          sayaclar = sayaclar.map((s) =>
+            s.id === id ? { ...s, deger: s.deger - 1 } : s,
+          );
+        } else if (action === "sil") {
+          sayaclar = sayaclar.filter((s) => s.id !== id);
+        }
+
+        sayaclariKaydetVeCiz(sayaclar);
+      });
+
+      sayacEkleBtn.addEventListener("click", yeniSayacEkle);
+
+      window.addEventListener("load", function () {
+        ekraniCiz(sayaclariGetir());
+      });
+    </script>
+  </body>
+</html>
